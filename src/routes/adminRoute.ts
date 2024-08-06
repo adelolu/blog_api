@@ -1,10 +1,12 @@
 import express , { Express, Request, Response , Application }from 'express'
-import { addpost } from '../controllers/admin';
+import { AddPost, Post, EditPost } from '../controllers/admin';
 const router = express.Router()
 
 
-// router.get("/", Home)
-router.post("/post", addpost)
+
+router.post("/post", AddPost)
+router.get("/", Post)
+router.post("/edit", EditPost)
 
 
  export default router;

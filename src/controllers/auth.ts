@@ -1,5 +1,5 @@
 import express , { Express, Request, Response , Application }from 'express'
-import { usermodel } from '../db/authModel';
+import { usermodel } from '../models/userModel';
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"
 
@@ -38,6 +38,8 @@ export const Signup = async (req:Request, res: Response) => {
 export const Login = async (req:Request, res:Response) => {
   try {
     const { email, password } = req.body;
+    console.log(req.body);
+    
     if (!email || !password) {
       res.status(400).json({ message: "input cannot be empty", status: false });
     } else {
@@ -61,10 +63,10 @@ export const Login = async (req:Request, res:Response) => {
  
           let query: {email:string}  ={ email: email}
           
-           await usermodel.findOneAndUpdate(query, {token:token})
+         let user:any =  await usermodel.findOneAndUpdate(query, {token:token})
           res
             .status(200)
-            .json({ message: "login successful", status: true, token});
+            .json({ message: "login successful", status: true, token, id:user._id });
         } else {
           res
             .status(400)
@@ -77,7 +79,7 @@ export const Login = async (req:Request, res:Response) => {
   }
 };
 
-export const verifyuser = async (req:Request, res:Response) => {
+export const VerifyUser = async (req:Request, res:Response) => {
   try {
     const token: string |undefined = req.headers.authorization?.split(" ")[1];
     
@@ -102,7 +104,7 @@ export const verifyuser = async (req:Request, res:Response) => {
   }
 };
 
-export const logout = async (req: Request, res: Response) => {
+export const Logout = async (req: Request, res: Response) => {
   try {
     const { username } = req.body
     console.log(username);

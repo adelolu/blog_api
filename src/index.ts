@@ -17,16 +17,18 @@ app.set( "view engine", "ejs" );
 
 app.use(express.urlencoded({extended: true}))
 app.use(bodyParser.json());
+
+
 app.use('/', defaultRoute)
-app.use('/admin', adminRoute)
+app.use('/dashboard/:id', adminRoute)
 
 
-app.listen(port, () => {
-    console.log(`Server is Fire at http://localhost:${port}`);
-  });
+
 const uri: string = process.env.URI!
 mongoose.connect(uri).then(() => {
-      console.log('connected to database');
+      app.listen(port, () => {
+    console.log(`Server is Fire at http://localhost:${port}`);
+  });
       
 }).catch((error: any) => {
       console.log(error); 
