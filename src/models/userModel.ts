@@ -1,6 +1,12 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
+interface IUser {
+  username: string;
+  email: string;
+  password: string;
+  token: string;
+}
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema<IUser>({
   username: {
     type: String,
     required: true,
@@ -15,17 +21,12 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    // minLength: [5, "password cant be short"],
-    // select: false
   },
- 
+
   token: {
     type: String,
-    required: true,
-    default: ''
+    default: "",
   },
 });
 
-export const usermodel = mongoose.model("user_collection", userSchema);
-
-
+export const usermodel = mongoose.model<IUser>("user", userSchema);

@@ -1,130 +1,122 @@
-import express , { Express, Request, Response , Application }from 'express'
-import { usermodel } from '../models/userModel';
+import express, { Express, Request, Response, Application } from "express";
+import { usermodel } from "../models/userModel";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
-
-export const Signup = async (req:Request, res: Response) => {
+export const Signup = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
-    
-    if (!username || !email || !password) {
-      res.status(400).json({ message: "input cannot be empty", status: false });
+
+    if (!username) {
+      return res
+        .status(400)
+        .json({ message: "username cannot be empty", status: false });
+    } else if (!email) {
+      return res
+        .status(400)
+        .json({ message: "email cannot be empty", status: false });
+    } else if (!password) {
+      return res
+        .status(400)
+        .json({ message: "password cannot be empty", status: false });
     }
-    else {
-      const existuser:object|null = await usermodel.findOne({ email: email });
-      
-      if (existuser) {
-        res.status(400).json({ message: "user already exist", status: false });
-      } else {
-        let hashpassword = await bcrypt.hash(password, 10);
-        
-        const newuser = await usermodel.create({
-          username,
-          email,
-          password: hashpassword
-        });
-        
-        if (newuser) {
-          res.status(201).json({ message: "signup successful", status: true });
-        }
-      }
+
+    const existuser = await usermodel.findOne({ email: email });
+
+    if (existuser) {
+      return res
+        .status(400)
+        .json({ message: "user already exist", status: false });
     }
-  } catch (error:any) {
-    res.status(500).json({ message: error.message , status: false });
+    let hashpassword = await bcrypt.hash(password, 10);
+
+    const newuser = await usermodel.create({
+      username,
+      email,
+      password: hashpassword,
+    });
+    console.log(newuser);
+
+    if (!newuser) {
+      res.status(400).json({ message: "signup unsuccessful", status: false });
+    }
+    res.status(201).json({ message: "signup successful", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
   }
 };
 
-export const Login = async (req:Request, res:Response) => {
+export const Login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    console.log(req.body);
-    
-    if (!email || !password) {
-      res.status(400).json({ message: "input cannot be empty", status: false });
-    } else {
-      const existuser = await usermodel.findOne({ email: email });
-      
-      if (!existuser) {
-        res
-          .status(400)
-          .json({ message: "Account does not exist", status: false });
-      } else {
-
-        let correctpassword = await bcrypt.compare(
-          password,
-          existuser.password
-        );
-        if (correctpassword === true) {
-          const token = await jwt.sign({ email }, "secretKey", {
-            expiresIn: "1d",
-          });
-        
- 
-          let query: {email:string}  ={ email: email}
-          
-         let user:any =  await usermodel.findOneAndUpdate(query, {token:token})
-          res
-            .status(200)
-            .json({ message: "login successful", status: true, token, id:user._id });
-        } else {
-          res
-            .status(400)
-            .json({ message: "Incorrect password", status: false });
-        }
-      }
+    if (!email) {
+      res.status(400).json({ message: "email cannot be empty", status: false });
+    } else if (!password) {
+      res
+        .status(400)
+        .json({ message: "password cannot be empty", status: false });
     }
-  } catch (error:any) {
-    res.status(500).json({ message: error.message, status: false });
+    const existuser = await usermodel.findOne({ email: email });
+
+    if (!existuser) {
+      return res
+        .status(400)
+        .json({ message: "Account does not exist", status: false });
+    }
+
+    let correctpassword = await bcrypt.compare(password, existuser.password);
+    console.log(correctpassword);
+
+    if (!correctpassword) {
+      return res
+        .status(400)
+        .json({ message: "Incorrect password", status: false });
+    }
+    const token = await jwt.sign({ email }, "secretKey", {
+      expiresIn: "1d",
+    });
+    res.status(200).json({
+      message: "login successful",
+      status: true,
+      token,
+      id: existuser._id,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
   }
 };
 
-export const VerifyUser = async (req:Request, res:Response) => {
+export const VerifyUser = async (req: Request, res: Response) => {
   try {
-    const token: string |undefined = req.headers.authorization?.split(" ")[1];
-    
-    if (!token) {
-      res.status(400).json({ message: "invalid token", status: false });
-    } else {
-      const verifyToken:any = await jwt.verify(token, "secretKey");
-      
+    const token: string | undefined = req.headers.authorization?.split(" ")[1];
 
-      const email = verifyToken.email;
-      const verifyuser = await usermodel.findOne({ email });
-      if (verifyuser) {
-        res.status(200).json({ message: "user is verified", status: true });
-      }
+    if (!token) {
+      return res.status(400).json({ message: "invalid token", status: false });
     }
-  } catch (error:any) {
-    if (error.message === "jwt malformed") {
-      res.status(401).json({ message: "incorrect token", status: false });
-    } else {
-      res.status(500).json({ message: error.message, status: false });
+    const verifyToken: any = await jwt.verify(token, "secretKey");
+
+    const email = verifyToken.email;
+    const verifyuser = await usermodel.findOne({ email });
+    if (verifyuser) {
+      res.status(200).json({ message: "user is verified", status: true });
     }
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
   }
 };
 
 export const Logout = async (req: Request, res: Response) => {
   try {
-    const { username } = req.body
-    console.log(username);
-    
-    
-      if (!username) {
-      return  res.status(400).json({ message: "logout unsuccessful", status: false });
-        
+    const { username } = req.body;
+
+    if (!username) {
+      return res
+        .status(400)
+        .json({ message: "logout unsuccessful", status: false });
     }
-    let query: {username:string}  ={ username: username}
-      const user = await usermodel.findOneAndUpdate(query, {token: ''});
-      console.log(user);
-      
-      if (user) {
-        res.status(200).json({ message: "logout successful", status: true });
-      }
-   
-  } catch (error:any) {
-   
-      res.status(500).json({ message: error.message, status: false });
-    
+
+    res.status(200).json({ message: "logout successful", status: true });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message, status: false });
   }
-}
+};
