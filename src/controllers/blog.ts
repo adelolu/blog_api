@@ -1,19 +1,18 @@
-import express , {  Request, Response  }from 'express'
-import { postmodel } from '../models/postModel';
+import { Request, Response } from "express";
+import { postmodel } from "../models/postModel";
 
-//im not done
-export const Home = async (req:Request, res: Response) => {
- try {
-     const post: any = await postmodel.find({})
+export const Posts = async (req: Request, res: Response) => {
+  try {
+    const post = await postmodel.find({});
+    console.log(post);
+
     if (!post) {
-       return res.status(500).json({ message:"Error", status: false })
+      return res
+        .status(400)
+        .json({ message: "posts not found", status: false });
     }
-    return res.status(200).json({ data: post, status: true })
-
-
- } catch (error) {
- console.log(error);
- 
-    return res.status(500).json({ message: "error", status:false})
- }
+    return res.status(200).json({ data: post, status: true });
+  } catch (error) {
+    return res.status(500).json({ message: error, status: false });
+  }
 };

@@ -3,7 +3,7 @@ interface IUser {
   username: string;
   email: string;
   password: string;
-  token: string;
+  authorID: string;
 }
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -22,8 +22,7 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
     required: true,
   },
-
-  token: {
+  authorID: {
     type: String,
     default: "",
   },

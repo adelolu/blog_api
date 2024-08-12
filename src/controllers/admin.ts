@@ -6,6 +6,7 @@ export const AddPost = async (req: Request, res: Response) => {
   try {
     let { id } = req.params;
     let { title, content, hashtags, author } = req.body;
+    console.log(id);
 
     if (!title) {
       return res
@@ -35,7 +36,12 @@ export const AddPost = async (req: Request, res: Response) => {
       author: authors,
       authorId: id,
     };
-    let newpost = await postmodel.create(post);
+    let newpost = await postmodel
+      .create(post)
+      .then()
+      .catch((error) => {
+        console.log(error, "catch bay");
+      });
     if (!newpost) {
       return res
         .status(400)
@@ -48,16 +54,13 @@ export const AddPost = async (req: Request, res: Response) => {
     res.status(500).json({ message: error, status: false });
   }
 };
-
+//function to display all posts
 export const Post = async (req: Request, res: Response) => {
   try {
     let { id } = req.params;
 
     let userPost = await postmodel.find({ authorId: id });
-
-    if (userPost.length === 0) {
-      return res.status(400).json({ message: "post not found", status: false });
-    }
+    console.log(userPost);
 
     res.status(200).json({ data: userPost, status: true });
   } catch (error: any) {
@@ -96,11 +99,35 @@ export const EditPost = async (req: Request, res: Response) => {
       { _id: pid, authorId: id },
       editedpost
     );
+
     if (!post) {
-      res.status(400).json({ message: "post not edited", status: false });
+      return res
+        .status(400)
+        .json({ message: "post not edited", status: false });
     }
     res.status(200).json({ message: "post edited successfully", status: true });
-  } catch (error: unknown) {
-    return res.status(500).json({ message: error, status: false });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
+  }
+};
+
+//function to delete post
+export const DeletePost = async (req: Request, res: Response) => {
+  try {
+    let { id, pid } = req.params;
+
+    let del = await postmodel.findOneAndDelete({ _id: pid, authorId: id });
+    console.log(del, "del");
+
+    if (!del) {
+      return res
+        .status(400)
+        .json({ message: "post do not exist", status: false });
+    }
+    res
+      .status(200)
+      .json({ message: "post deleted successfully", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
   }
 };
