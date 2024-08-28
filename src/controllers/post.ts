@@ -143,7 +143,7 @@ export const deletePost = async (req: Request, res: Response) => {
 
 export const getAllPosts = async (req: Request, res: Response) => {
   try {
-    const allpost = await Post.find();
+    const allpost = await Post.find().populate("authorId");
 
     return res.status(200).json({ data: allpost, status: true });
   } catch (error) {
@@ -153,7 +153,7 @@ export const getAllPosts = async (req: Request, res: Response) => {
 export const getOnePost = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const post = await Post.findOne({ _id: postId });
+    const post = await Post.findOne({ _id: postId }).populate("authorId");
 
     if (!post) {
       return res.status(400).json({ message: "post not found", status: false });

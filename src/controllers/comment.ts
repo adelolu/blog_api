@@ -37,7 +37,7 @@ export const getComments = async (req: Request, res: Response) => {
     }
     console.log(post);
 
-    let comments = await Comment.find({ postId });
+    let comments = await Comment.find({ postId }).populate("userId");
     console.log(comments);
 
     return res.status(200).json({ data: comments, status: true });
