@@ -1,16 +1,16 @@
 import { Schema, model, Types, Document } from "mongoose";
-import postModel from "./post";
-import userModel from "./user";
+import Post from "./post";
+import User from "./user";
 
 interface IComment extends Document {
-  postid: Types.ObjectId;
-  userid: Types.ObjectId;
+  postId: Types.ObjectId;
+  userId: Types.ObjectId;
   content: string;
 }
 const commentSchema = new Schema<IComment>(
   {
-    postid: { type: Schema.Types.ObjectId, ref: postModel },
-    userid: { type: Schema.Types.ObjectId, ref: userModel },
+    postId: { type: Schema.Types.ObjectId, ref: Post },
+    userId: { type: Schema.Types.ObjectId, ref: User },
     content: { type: String, required: true },
   },
   { timestamps: true }

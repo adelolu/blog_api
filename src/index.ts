@@ -1,27 +1,20 @@
-import express, { Express, Request, Response, Application } from "express";
+import express, { Application } from "express";
 import dotenv from "dotenv";
-import path from "path";
-import defaultRoute from "./routes/default";
-import authorRoute from "./routes/author";
-import adminRoute from "./routes/admin";
+import post from "./routes/post";
 import mongoose from "mongoose";
 import * as bodyParser from "body-parser";
+import defaultRoutes from "./main";
 dotenv.config();
 
 const app: Application = express();
 const port = process.env.PORT || 8000;
 
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
-
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-//im not sure about this line
 // app.use(bodyParser.urlencoded());
 
-app.use("/", defaultRoute);
-app.use("/dashboard", authorRoute);
-app.use("/admin", adminRoute);
+// app.use("/", post);
+defaultRoutes(app);
 
 const uri = process.env.URI!;
 mongoose

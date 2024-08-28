@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import user from "../models/user";
+import User, { UserRoles } from "../models/user";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import admin from "../models/admin";
 import { MyToken } from "../middleware/auth";
 
 function generateToken(_id: mongoose.Types.ObjectId, email: string): string {
@@ -50,10 +49,6 @@ export const createUser = async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ message: "gender cannot be empty", status: false });
-    } else if (!bio) {
-      return res
-        .status(400)
-        .json({ message: "bio cannot be empty", status: false });
     } else if (!date_of_birth) {
       return res
         .status(400)
@@ -64,16 +59,22 @@ export const createUser = async (req: Request, res: Response) => {
         .json({ message: "role cannot be empty", status: false });
     }
 
-    const existuser = await user.findOne({ email });
+    const existuser = await User.findOne({ email });
 
     if (existuser) {
       return res
         .status(400)
         .json({ message: "user already exist", status: false });
     }
+
+    if (role === UserRoles.admin) {
+      return res
+        .status(403)
+        .json({ message: "Action forbidden", status: false });
+    }
     let hashpassword = await bcrypt.hash(password, 10);
 
-    const newuser = await user.create({
+    const newuser = await User.create({
       firstname,
       lastname,
       username,
@@ -112,7 +113,7 @@ export const loginUser = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "password cannot be empty", status: false });
     }
-    const existuser = await user.findOne({ email }, "+password");
+    const existuser = await User.findOne({ email }, "+password");
 
     if (!existuser) {
       return res
@@ -136,15 +137,22 @@ export const loginUser = async (req: Request, res: Response) => {
       user: existuser,
     });
   } catch (error) {
-    console.log(error);
-
     res.status(500).json({ message: error, status: false });
   }
 };
 
 export const createAdmin = async (req: Request, res: Response) => {
   try {
-    const { username, role, email, password } = req.body;
+    const {
+      username,
+      firstname,
+      lastname,
+      date_of_birth,
+      gender,
+      bio,
+      email,
+      password,
+    } = req.body;
 
     if (!username) {
       return res
@@ -158,37 +166,53 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ message: "password cannot be empty", status: false });
-    }
-
-    const existadmin = await admin.findOne({ email });
-
-    if (existadmin) {
+    } else if (!firstname) {
       return res
         .status(400)
-        .json({ message: "admin already exist", status: false });
+        .json({ message: "firstname cannot be empty", status: false });
+    } else if (!lastname) {
+      return res
+        .status(400)
+        .json({ message: "lastname cannot be empty", status: false });
     }
+
+    const existuser = await User.findOne({ email });
+
+    if (existuser) {
+      return res
+        .status(400)
+        .json({ message: "user already exist", status: false });
+    }
+    console.log(req.user);
+
+    // if (role === UserRoles.admin && req.user.role === UserRoles.admin) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Action forbidden", status: false });
+    // }
     let hashpassword = await bcrypt.hash(password, 10);
 
-    const newadmin = await admin.create({
+    const newuser = await User.create({
+      firstname,
+      lastname,
       username,
       email,
       password: hashpassword,
-      role: "admin",
+      gender,
+      date_of_birth,
+      bio,
+      role: UserRoles.admin,
     });
 
-    if (!newadmin) {
+    if (!newuser) {
       return res
         .status(400)
-        .json({ message: "admin signup unsuccessful", status: false });
+        .json({ message: "Admin not created", status: false });
     }
-    newadmin.set("password", undefined);
-    const token = generateToken(newadmin.id, email);
-    res.status(201).json({
-      message: "admin signup successful",
-      token,
-      admin: newadmin,
-      status: true,
-    });
+    newuser.set("password", undefined);
+    res
+      .status(201)
+      .json({ message: "Admin created successful", newuser, status: true });
   } catch (error) {
     res.status(500).json({ message: error, status: false });
   }
@@ -206,7 +230,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "password cannot be empty", status: false });
     }
-    const existadmin = await admin.findOne({ email }, "+password");
+    const existadmin = await User.findOne({ email }, "+password");
 
     if (!existadmin) {
       return res
@@ -245,7 +269,7 @@ export const tokenVerification = async (req: Request, res: Response) => {
     }
     const verifyToken = jwt.verify(token, "secretKey") as unknown as MyToken;
 
-    const verifyuser = await user.findById(verifyToken._id);
+    const verifyuser = await User.findById(verifyToken._id);
 
     if (!verifyuser || verifyuser.id !== id) {
       return res
