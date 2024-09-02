@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { MyToken } from "../middleware/auth";
+import crypto from "crypto";
+import Email from "../services/email";
 
 function generateToken(_id: mongoose.Types.ObjectId, email: string): string {
   return jwt.sign({ _id, email }, "secretKey", {
@@ -93,6 +95,7 @@ export const createUser = async (req: Request, res: Response) => {
     }
     newuser.set("password", undefined);
     const token = generateToken(newuser.id, email);
+    await new Email().sendWelcome(newuser);
     res
       .status(201)
       .json({ message: "signup successful", token, newuser, status: true });
@@ -258,7 +261,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     res.status(500).json({ message: error, status: false });
   }
 };
-
+//check
 export const tokenVerification = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -277,6 +280,62 @@ export const tokenVerification = async (req: Request, res: Response) => {
         .json({ message: "Unauthorized acess", status: false });
     }
     res.status(200).json({ message: "user is verified", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne(email);
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User does not exist", status: false });
+    }
+    const token = crypto.randomBytes(20).toString("hex");
+    const now = new Date();
+
+    user.recoveryCode = token;
+    user.recoveryCodeExpiry = new Date(now.getTime() + 60 * 60000); // 1 hour from now
+
+    await user.save();
+
+    const resetLink = `${process.env.WEBSITE}/reset-password?token=${token}`;
+    await new Email().sendPasswordReset(user, resetLink);
+    res.status(200).json({ message: "Reset link sent", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+    const user = await User.findOne({
+      recoveryCode: token,
+      recoveryCodeExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Password reset token is invalid or has expired.",
+        status: false,
+      });
+    }
+
+    const hashpassword = await bcrypt.hash(password, 10);
+    user.password = hashpassword;
+    user.set("recoveryCode", undefined);
+    user.set("recoveryCodeExpiry", undefined);
+    // user.recoveryCode = "";
+    // user.recoveryCodeExpiry = undefined
+
+    await user.save();
+
+    res.status(200).json({ message: "Password has been reset", status: true });
   } catch (error) {
     res.status(500).json({ message: error, status: false });
   }

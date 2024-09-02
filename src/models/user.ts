@@ -10,6 +10,11 @@ export interface IUser extends Document {
   bio: string;
   role: string;
   profileImage: string;
+  recoveryCode: String;
+  recoveryCodeExpiry: Date;
+  verificationCode: String;
+  verificationCodeExpiry: Date;
+  emailVerified: Boolean;
 }
 export const UserRoles = {
   author: "author",
@@ -46,8 +51,7 @@ const userSchema = new mongoose.Schema<IUser>({
     enum: Object.values(UserRoles),
     default: UserRoles.user,
   },
-  date_of_birth: Date,
-  gender: String,
+
   bio: {
     type: String,
     default: "",
@@ -57,6 +61,16 @@ const userSchema = new mongoose.Schema<IUser>({
     default:
       "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
   },
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  date_of_birth: Date,
+  gender: String,
+  recoveryCode: String,
+  recoveryCodeExpiry: Date,
+  verificationCode: String,
+  verificationCodeExpiry: Date,
 });
 
 export default mongoose.model<IUser>("user", userSchema);
