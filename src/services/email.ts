@@ -66,6 +66,13 @@ class Email {
       resetLink,
     });
   }
+  async sendVerifyEmail(user: IUser, verifyLink: string) {
+    await this.sendHtml(user.email, "verifyemail", "Verify Email", {
+      firstName: user.firstname,
+      lastName: user.lastname,
+      verifyLink,
+    });
+  }
 }
 
 export default Email;

@@ -325,3 +325,56 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(500).json({ message: error, status: false });
   }
 };
+
+export const verifyEmail = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User does not exist", status: false });
+    }
+    const token = crypto.randomBytes(20).toString("hex");
+    const now = new Date();
+
+    user.verificationCode = token;
+    user.verificationCodeExpiry = new Date(now.getTime() + 60 * 60000); // 1 hour from now
+
+    await user.save();
+
+    const verifyLink = `${process.env.WEBSITE}/verified-email?token=${token}`;
+    await new Email().sendVerifyEmail(user, verifyLink);
+    res.status(200).json({ message: "Verification link sent", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
+  }
+};
+
+export const verifiedEmail = async (req: Request, res: Response) => {
+  try {
+    const token = req.query.token;
+    console.log(token);
+
+    const user = await User.findOne({
+      verificationCode: token,
+      verificationCodeExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        message: " Email verification reset token is invalid or has expired.",
+        status: false,
+      });
+    }
+    user.set("emailVerified", true);
+    user.set("verificationCode", undefined);
+    user.set("verificationCodeExpiry", undefined);
+
+    await user.save();
+
+    res.status(200).json({ message: "Email has been verified", status: true });
+  } catch (error) {
+    res.status(500).json({ message: error, status: false });
+  }
+};
