@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import User, { UserRoles } from "../models/user";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { MyToken } from "../middleware/auth";
