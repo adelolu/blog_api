@@ -8,10 +8,6 @@ export const addPost = async (req: Request, res: Response) => {
   try {
     let { id } = req.user;
     let { title, content, hashtags } = req.body;
-    // const author = req.user;
-    // if (author.id !== id) {
-    //   return res.status(401).json({ message: "unauthorized", status: false });
-    // }
 
     if (!title) {
       return res
@@ -90,9 +86,6 @@ export const editPost = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "post not edited", status: false });
     }
-    console.log(editpost.authorId);
-    console.log(user.id);
-
     if (user.id !== editpost.authorId.toString()) {
       return res
         .status(403)
@@ -118,9 +111,6 @@ export const deletePost = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "post do not exist", status: false });
     }
-    console.log(user);
-    console.log(user.role !== UserRoles.admin);
-    console.log(user.id !== del.authorId.toString());
 
     if (user.id !== del.authorId.toString()) {
       if (user.role !== UserRoles.admin) {

@@ -6,9 +6,11 @@ export const addComment = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     const { content } = req.body;
+    let user = req.user;
+
     let comment = {
       postId,
-      userId: req.user._id,
+      userId: user.id,
       content,
     };
     let posts = await Post.findOne({ _id: postId });

@@ -17,7 +17,6 @@ export interface IUser extends Document {
   emailVerified: Boolean;
 }
 export const UserRoles = {
-  author: "author",
   admin: "admin",
   user: "user",
 } as const;

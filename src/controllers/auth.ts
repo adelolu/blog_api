@@ -22,7 +22,6 @@ export const createUser = async (req: Request, res: Response) => {
       date_of_birth,
       gender,
       bio,
-      role,
       email,
       password,
     } = req.body;
@@ -55,12 +54,7 @@ export const createUser = async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ message: "date of birth cannot be empty", status: false });
-    } else if (!role) {
-      return res
-        .status(400)
-        .json({ message: "role cannot be empty", status: false });
     }
-
     const existuser = await User.findOne({ email });
 
     if (existuser) {
@@ -69,11 +63,6 @@ export const createUser = async (req: Request, res: Response) => {
         .json({ message: "user already exist", status: false });
     }
 
-    if (role === UserRoles.admin) {
-      return res
-        .status(403)
-        .json({ message: "Action forbidden", status: false });
-    }
     let hashpassword = await bcrypt.hash(password, 10);
 
     const newuser = await User.create({
@@ -85,7 +74,7 @@ export const createUser = async (req: Request, res: Response) => {
       gender,
       date_of_birth,
       bio,
-      role,
+      role: UserRoles.user,
     });
 
     if (!newuser) {
@@ -186,13 +175,7 @@ export const createAdmin = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "user already exist", status: false });
     }
-    console.log(req.user);
 
-    // if (role === UserRoles.admin && req.user.role === UserRoles.admin) {
-    //   return res
-    //     .status(403)
-    //     .json({ message: "Action forbidden", status: false });
-    // }
     let hashpassword = await bcrypt.hash(password, 10);
 
     const newuser = await User.create({
@@ -221,46 +204,46 @@ export const createAdmin = async (req: Request, res: Response) => {
   }
 };
 
-export const loginAdmin = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    if (!email) {
-      return res
-        .status(400)
-        .json({ message: "email cannot be empty", status: false });
-    } else if (!password) {
-      return res
-        .status(400)
-        .json({ message: "password cannot be empty", status: false });
-    }
-    const existadmin = await User.findOne({ email }, "+password");
+// export const loginAdmin = async (req: Request, res: Response) => {
+//   try {
+//     const { email, password } = req.body;
+//     if (!email) {
+//       return res
+//         .status(400)
+//         .json({ message: "email cannot be empty", status: false });
+//     } else if (!password) {
+//       return res
+//         .status(400)
+//         .json({ message: "password cannot be empty", status: false });
+//     }
+//     const existadmin = await User.findOne({ email }, "+password");
 
-    if (!existadmin) {
-      return res
-        .status(400)
-        .json({ message: "Account does not exist", status: false });
-    }
+//     if (!existadmin) {
+//       return res
+//         .status(400)
+//         .json({ message: "Account does not exist", status: false });
+//     }
 
-    let correctpassword = await bcrypt.compare(password, existadmin.password);
+//     let correctpassword = await bcrypt.compare(password, existadmin.password);
 
-    if (!correctpassword) {
-      return res
-        .status(400)
-        .json({ message: "Incorrect password", status: false });
-    }
-    existadmin.set("password", undefined);
-    const token = generateToken(existadmin.id, email);
-    res.status(200).json({
-      message: "login successful",
-      status: true,
-      token,
-      admin: existadmin,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error, status: false });
-  }
-};
+//     if (!correctpassword) {
+//       return res
+//         .status(400)
+//         .json({ message: "Incorrect password", status: false });
+//     }
+//     existadmin.set("password", undefined);
+//     const token = generateToken(existadmin.id, email);
+//     res.status(200).json({
+//       message: "login successful",
+//       status: true,
+//       token,
+//       admin: existadmin,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: error, status: false });
+//   }
+// };
 //check
 export const tokenVerification = async (req: Request, res: Response) => {
   try {
@@ -288,7 +271,8 @@ export const tokenVerification = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne(email);
+    const user = await User.findOne({ email });
+    console.log(user);
 
     if (!user) {
       return res
@@ -313,7 +297,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { token, password } = req.body;
+    const { password } = req.body;
+    const token = req.query.token;
+    console.log(token);
+
     const user = await User.findOne({
       recoveryCode: token,
       recoveryCodeExpiry: { $gt: Date.now() },
@@ -330,8 +317,6 @@ export const resetPassword = async (req: Request, res: Response) => {
     user.password = hashpassword;
     user.set("recoveryCode", undefined);
     user.set("recoveryCodeExpiry", undefined);
-    // user.recoveryCode = "";
-    // user.recoveryCodeExpiry = undefined
 
     await user.save();
 

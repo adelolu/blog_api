@@ -4,6 +4,7 @@ import nodemailer, { Transporter } from "nodemailer";
 import { compile } from "handlebars";
 import { convert } from "html-to-text";
 import { IUser } from "../models/user";
+import { log } from "console";
 
 class Email {
   private user: string;
@@ -35,7 +36,7 @@ class Email {
     data: Record<string, any>
   ) {
     const htmlTemplate = fs.readFileSync(
-      path.join(__dirname, `../../templates/${template}.html`),
+      path.join(__dirname, `../templates/${template}.html`),
       "utf-8"
     );
     const html = compile(htmlTemplate)(data);

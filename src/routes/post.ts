@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyAccess } from "../middleware/auth";
+import { isLoggedin, verifyAccess } from "../middleware/auth";
 import {
   addPost,
   getAuthorPosts,
@@ -15,11 +15,11 @@ const router = Router();
 router.get("/", getAllPosts);
 router.get("/:postId", getOnePost);
 router.get("/author/:_id", getAuthorPosts);
-router.post("/", verifyAccess([UserRoles.author]), addPost);
-router.post("/edit/:postId", verifyAccess([UserRoles.author]), editPost);
+router.post("/", isLoggedin, addPost);
+router.post("/edit/:postId", verifyAccess([UserRoles.user]), editPost);
 router.delete(
   "/:postId",
-  verifyAccess([UserRoles.author, UserRoles.admin]),
+  verifyAccess([UserRoles.user, UserRoles.admin]),
   deletePost
 );
 // export default router;
