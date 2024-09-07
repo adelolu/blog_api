@@ -5,7 +5,12 @@ declare global {
   namespace Express {
     interface Request {
       user: IUser;
-      admin: IAdmin;
+      fileName: string;
+    }
+  }
+  namespace Multer {
+    interface File {
+      location: string;
     }
   }
 }

@@ -47,7 +47,6 @@ export const addPost = async (req: Request, res: Response) => {
 export const getAuthorPosts = async (req: Request, res: Response) => {
   try {
     let { _id } = req.params;
-    //populate
 
     let myposts = await Post.find({ authorId: _id });
 
@@ -61,7 +60,7 @@ export const editPost = async (req: Request, res: Response) => {
   try {
     let { title, content, hashtags } = req.body;
     let { postId } = req.params;
-    let user = req.user;
+    let { id } = req.user;
 
     if (!title) {
       return res
@@ -86,7 +85,7 @@ export const editPost = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "post not edited", status: false });
     }
-    if (user.id !== editpost.authorId.toString()) {
+    if (id !== editpost.authorId.toString()) {
       return res
         .status(403)
         .json({ message: "Action forbidden", status: false });
@@ -121,7 +120,7 @@ export const deletePost = async (req: Request, res: Response) => {
     }
 
     await Post.deleteOne({ _id: postId });
-    await Comment.deleteMany({ postId });
+    await Comment.deleteMany({ post: postId });
 
     res
       .status(200)
@@ -133,7 +132,10 @@ export const deletePost = async (req: Request, res: Response) => {
 
 export const getAllPosts = async (req: Request, res: Response) => {
   try {
-    const allpost = await Post.find().populate("authorId");
+    const allpost = await Post.find().populate({
+      path: "authorId",
+      select: "username firstname lastname profileImage",
+    });
 
     return res.status(200).json({ data: allpost, status: true });
   } catch (error) {
@@ -143,7 +145,10 @@ export const getAllPosts = async (req: Request, res: Response) => {
 export const getOnePost = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
-    const post = await Post.findOne({ _id: postId }).populate("authorId");
+    const post = await Post.findOne({ _id: postId }).populate({
+      path: "authorId",
+      select: "username firstname lastname profileImage ",
+    });
 
     if (!post) {
       return res.status(400).json({ message: "post not found", status: false });

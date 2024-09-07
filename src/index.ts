@@ -24,6 +24,7 @@ app.use(bodyParser.json());
 defaultRoutes(app);
 
 const uri = process.env.URI!;
+// const uri = "mongodb://0.0.0.0:27017";
 mongoose
   .connect(uri)
   .then(() => {

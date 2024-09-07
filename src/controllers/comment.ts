@@ -10,8 +10,8 @@ export const addComment = async (req: Request, res: Response) => {
 
     let comment = {
       postId,
-      userId: user.id,
-      content,
+      user: user.id,
+      comment: content,
     };
     let posts = await Post.findOne({ _id: postId });
     if (!posts) {
@@ -37,10 +37,14 @@ export const getComments = async (req: Request, res: Response) => {
     if (!post) {
       return res.status(400).json({ message: "post not found", status: false });
     }
-    console.log(post);
-
-    let comments = await Comment.find({ postId }).populate("userId");
-    console.log(comments);
+    let comments = await Comment.find({ post: postId }).populate({
+      path: "post",
+      select: "title content ",
+      populate: {
+        path: "authorId",
+        select: "username firstname profileImage ",
+      },
+    });
 
     return res.status(200).json({ data: comments, status: true });
   } catch (error) {
