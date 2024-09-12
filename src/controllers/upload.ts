@@ -39,8 +39,9 @@ export const uploadCloudinary = async (req: Request, res: Response) => {
     // }
     res
       .status(200)
-      .json({ data: "profile picture added successfully", status: true });
+      .json({ status: true, message: "profile picture added successfully" });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ message: error, status: false });
   }
 };

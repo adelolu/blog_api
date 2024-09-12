@@ -1,11 +1,10 @@
 import express, { Application } from "express";
 import dotenv from "dotenv";
-import post from "./routes/post";
+dotenv.config();
 import mongoose from "mongoose";
 import * as bodyParser from "body-parser";
 import defaultRoutes from "./main";
 import cors from "cors";
-dotenv.config();
 
 const app: Application = express();
 const port = process.env.PORT || 8000;
@@ -24,7 +23,6 @@ app.use(bodyParser.json());
 defaultRoutes(app);
 
 const uri = process.env.URI!;
-// const uri = "mongodb://0.0.0.0:27017";
 mongoose
   .connect(uri)
   .then(() => {
